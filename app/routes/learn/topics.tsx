@@ -1,8 +1,12 @@
 import type { LoaderArgs } from '@remix-run/node';
+import type { ActionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import clsx from 'clsx';
+import React from 'react';
 import { Button } from '~/components/button/Button';
+import { CreateSectionModal } from '~/components/createSectionForm/CreateSectionForm';
+import { useModalState } from '~/hooks/useModalState';
 import { db } from '~/utils/db.server';
 
 export const loader = async (_: LoaderArgs) => {
@@ -12,6 +16,28 @@ export const loader = async (_: LoaderArgs) => {
       select: { id: true, title: true },
     }),
   });
+};
+
+function validateSectionTitle(content: string) {
+  if (content.length < 10) {
+    return `Section title is too short`;
+  }
+}
+
+export const action = async ({ request }: ActionArgs) => {
+  const form = await request.formData();
+  const title = form.get('title');
+  console.log(form);
+  if (typeof title !== 'string') {
+    throw new Error(`Form not submitted correctly.`);
+  }
+
+  const fields = { title };
+
+  const joke = await db.section.create({ data: fields });
+
+  return joke;
+  // return redirect(`/jokes/${joke.id}`);
 };
 
 const topSectionsPadding = 'p-12';
@@ -36,10 +62,6 @@ const topicsList = [
   {
     title: 'Słodycze',
     color: '#217AD1',
-  },
-  {
-    title: 'Supermarket',
-    color: '#0AB1B4',
   },
 ];
 
@@ -72,32 +94,55 @@ export const LastPlayedWidget = ({ className }: { className: string }) => {
       <p className="text-[22px] uppercase">Jedzenie i picie</p>
       <p className="text-5xl">Owoce i warzywa</p>
       <p>Progress</p>
-      <Button href="/learn/play">Continue</Button>
+      <Button type="link" href="/learn/play">
+        Continue
+      </Button>
     </div>
   );
 };
 
 export default function TopicsRoute() {
-  const data = useLoaderData<typeof loader>();
-  console.log('data: ', data);
+  const { sections } = useLoaderData<typeof loader>();
+  const { isAddingOpen, openAddingModal, closeAddingModal } = useModalState();
 
   return (
-    <div className="flex flex-col w-full">
-      <div
-        className={clsx(
-          'w-full grid grid-cols-1 grid-rows-[auto, auto] gap-8 mb-20',
-          'lg:grid-cols-2 lg:grid-rows-1'
-        )}
-      >
-        <LastPlayedWidget className={topSectionsPadding} />
-        <SavedWordsWidget />
-      </div>
-      <div className="mb-10">
-        <p className="text-4xl font-semibold mb-6">Moje zestawy</p>
-        <div className="flex flex-wrap flex-row gap-5">
-          {topicsList.map(
-            ({ title, color }, index) =>
-              index > 3 && (
+    <>
+      <div className="flex flex-col w-full">
+        <div
+          className={clsx(
+            'w-full grid grid-cols-1 grid-rows-[auto, auto] gap-8 mb-20',
+            'lg:grid-cols-2 lg:grid-rows-1'
+          )}
+        >
+          <LastPlayedWidget className={topSectionsPadding} />
+          <SavedWordsWidget />
+        </div>
+        <div className="mb-10">
+          <p className="text-4xl font-semibold mb-6">Moje zestawy</p>
+          <div className="flex flex-wrap flex-row gap-5">
+            {topicsList.map(
+              ({ title, color }, index) =>
+                index > 3 && (
+                  <div
+                    key={title}
+                    style={{ backgroundColor: color }}
+                    className="w-[214px] h-[164px] rounded-xl p-4"
+                  >
+                    title
+                  </div>
+                )
+            )}
+          </div>
+        </div>
+
+        {sections.map(({ id, title }) => (
+          <div key={id} className="mb-10">
+            <div className="flex items items-end gap-4 mb-6">
+              <div className="text-4xl font-semibold">Zestawy premium</div>
+              <button className="text-lg text-white/60">Edytuj</button>
+            </div>
+            <div className="flex flex-wrap flex-row gap-5">
+              {topicsList.map(({ title, color }) => (
                 <div
                   key={title}
                   style={{ backgroundColor: color }}
@@ -105,51 +150,16 @@ export default function TopicsRoute() {
                 >
                   title
                 </div>
-              )
-          )}
-        </div>
-      </div>
-
-      <div className="mb-10">
-        <p className="text-4xl font-semibold mb-6">Czasowniki nieregularne</p>
-        <div className="flex flex-wrap flex-row gap-5">
-          {topicsList.map(({ title, color }) => (
-            <div
-              key={title}
-              style={{ backgroundColor: color }}
-              className="w-[214px] h-[164px] rounded-xl p-4"
-            >
-              title
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        ))}
 
-      <div className="mb-10">
-        <p className="text-4xl font-semibold mb-6">Zestawy premium</p>
-        <div className="flex flex-wrap flex-row gap-5">
-          {topicsList.map(({ title, color }) => (
-            <div
-              key={title}
-              style={{ backgroundColor: color }}
-              className="w-[214px] h-[164px] rounded-xl p-4"
-            >
-              title
-            </div>
-          ))}
-          {topicsList.map(({ title, color }) => (
-            <div
-              key={title}
-              style={{ backgroundColor: color }}
-              className="w-[214px] h-[164px] rounded-xl p-4"
-            >
-              title
-            </div>
-          ))}
-        </div>
+        <Button type="button" onClick={openAddingModal}>
+          Add new smth
+        </Button>
       </div>
-
-      <Button href="/learn/profile">Add new smth</Button>
-    </div>
+      {isAddingOpen && <CreateSectionModal closeModal={closeAddingModal} />}
+    </>
   );
 }

@@ -14,7 +14,9 @@ export default function Index() {
           <Link to={routes.pageTwo}>Page two</Link>
           <Link to={routes.pageThree}>Page three</Link>
 
-          <Button href="/learn/topics">GO TO APPLICATION</Button>
+          <Button type="link" href="/learn/topics">
+            GO TO APPLICATION
+          </Button>
         </div>
       </div>
       <Outlet />
