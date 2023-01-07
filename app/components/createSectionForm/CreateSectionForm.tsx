@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import type { CloseModalFunctionType } from '~/hooks/useModalState';
 import { PrimaryModalWrapper } from '~/components/modalWrapper/ModalWrapper';
-import { Form, useTransition } from '@remix-run/react';
+import { useFetcher } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
 
 type CreateSectionForm = {
@@ -17,23 +17,24 @@ const inputClassName = clsx(
 
 export const CreateSectionModal = ({ closeModal }: CreateSectionForm) => {
   const formRef = useRef<HTMLFormElement>(null);
-  const transition = useTransition();
+  const fetcher = useFetcher();
 
   const isSectionAdding =
-    transition.state === 'submitting' &&
-    transition.submission.formData.get('_action') === 'create-section';
+    fetcher.state === 'submitting' &&
+    fetcher.submission.formData.get('_action') === 'create-section';
 
-  // useEffect(() => {
-  //   if (!isSectionAdding) {
-  //     formRef.current?.reset();
-  //     closeModal();
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [isSectionAdding]);
+  console.log(fetcher.state);
+
+  useEffect(() => {
+    if (!isSectionAdding && fetcher.data && fetcher.state === 'idle') {
+      // formRef.current?.reset();
+      closeModal();
+    }
+  }, [isSectionAdding, fetcher.data, fetcher.state, closeModal]);
 
   return (
     <PrimaryModalWrapper closeModal={closeModal} title="Create Section">
-      <Form ref={formRef} method="post" className="flex flex-col gap-5">
+      <fetcher.Form ref={formRef} method="post" className="flex flex-col gap-5">
         <div>
           <label
             className="block uppercase tracking-wide text-theme-150 text-sm font-semibold mb-4"
@@ -57,7 +58,7 @@ export const CreateSectionModal = ({ closeModal }: CreateSectionForm) => {
         >
           {isSectionAdding ? 'Loading...' : 'Add'}
         </button>
-      </Form>
+      </fetcher.Form>
     </PrimaryModalWrapper>
   );
 };
