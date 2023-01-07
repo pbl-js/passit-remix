@@ -1,9 +1,8 @@
 import type { LoaderArgs } from '@remix-run/node';
 import type { ActionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { Form, useLoaderData, useTransition } from '@remix-run/react';
 import clsx from 'clsx';
-import React from 'react';
 import { Button } from '~/components/button/Button';
 import { CreateSectionModal } from '~/components/createSectionForm/CreateSectionForm';
 import { useModalState } from '~/hooks/useModalState';
@@ -18,26 +17,38 @@ export const loader = async (_: LoaderArgs) => {
   });
 };
 
-function validateSectionTitle(content: string) {
-  if (content.length < 10) {
-    return `Section title is too short`;
-  }
-}
-
 export const action = async ({ request }: ActionArgs) => {
   const form = await request.formData();
-  const title = form.get('title');
-  console.log(form);
-  if (typeof title !== 'string') {
-    throw new Error(`Form not submitted correctly.`);
+
+  const actionType = form.get('_action');
+
+  if (actionType === 'create-section') {
+    const title = form.get('title');
+
+    if (typeof title !== 'string') {
+      throw new Error(`Form not submitted correctly.`);
+    }
+
+    const fields = { title };
+
+    const section = await db.section.create({ data: fields });
+
+    return section;
   }
 
-  const fields = { title };
+  if (actionType === 'delete-section') {
+    const id = form.get('id');
 
-  const joke = await db.section.create({ data: fields });
+    if (typeof id !== 'string') {
+      throw new Error(`Form not submitted correctly.`);
+    }
 
-  return joke;
-  // return redirect(`/jokes/${joke.id}`);
+    const test = await db.section.delete({ where: { id } });
+
+    return test;
+  }
+
+  throw new Error('Action type not supported');
 };
 
 const topSectionsPadding = 'p-12';
@@ -102,8 +113,15 @@ export const LastPlayedWidget = ({ className }: { className: string }) => {
 };
 
 export default function TopicsRoute() {
+  const {
+    isOpen: isAddingOpen,
+    openModal: openAddingModal,
+    closeModal: closeAddingModal,
+  } = useModalState();
+
   const { sections } = useLoaderData<typeof loader>();
-  const { isAddingOpen, openAddingModal, closeAddingModal } = useModalState();
+
+  const transition = useTransition();
 
   return (
     <>
@@ -135,25 +153,46 @@ export default function TopicsRoute() {
           </div>
         </div>
 
-        {sections.map(({ id, title }) => (
-          <div key={id} className="mb-10">
-            <div className="flex items items-end gap-4 mb-6">
-              <div className="text-4xl font-semibold">Zestawy premium</div>
-              <button className="text-lg text-white/60">Edytuj</button>
+        {sections.map(({ id, title }) => {
+          const isSectionDeleting =
+            transition.state === 'submitting' &&
+            transition.submission.formData.get('_action') ===
+              'delete-section' &&
+            transition.submission.formData.get('id') === id;
+
+          return (
+            <div
+              key={id}
+              className={clsx('mb-10', { 'opacity-50': isSectionDeleting })}
+            >
+              <div className="flex items items-end gap-4 mb-6">
+                <div className="text-4xl font-semibold">{title}</div>
+                <Form method="post">
+                  <input type="hidden" name="id" value={id} />
+                  <button
+                    type="submit"
+                    name="_action"
+                    value="delete-section"
+                    className="text-lg text-white/60"
+                  >
+                    Delete
+                  </button>
+                </Form>
+              </div>
+              <div className="flex flex-wrap flex-row gap-5">
+                {topicsList.map(({ title, color }) => (
+                  <div
+                    key={title}
+                    style={{ backgroundColor: color }}
+                    className="w-[214px] h-[164px] rounded-xl p-4"
+                  >
+                    title
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap flex-row gap-5">
-              {topicsList.map(({ title, color }) => (
-                <div
-                  key={title}
-                  style={{ backgroundColor: color }}
-                  className="w-[214px] h-[164px] rounded-xl p-4"
-                >
-                  title
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         <Button type="button" onClick={openAddingModal}>
           Add new smth

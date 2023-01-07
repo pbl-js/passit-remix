@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 import type { CloseModalFunctionType } from '~/hooks/useModalState';
 import { PrimaryModalWrapper } from '~/components/modalWrapper/ModalWrapper';
-import { Form } from '@remix-run/react';
+import { Form, useTransition } from '@remix-run/react';
+import { useEffect, useRef } from 'react';
 
 type CreateSectionForm = {
   closeModal: CloseModalFunctionType;
@@ -15,9 +16,24 @@ const inputClassName = clsx(
 );
 
 export const CreateSectionModal = ({ closeModal }: CreateSectionForm) => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const transition = useTransition();
+
+  const isSectionAdding =
+    transition.state === 'submitting' &&
+    transition.submission.formData.get('_action') === 'create-section';
+
+  // useEffect(() => {
+  //   if (!isSectionAdding) {
+  //     formRef.current?.reset();
+  //     closeModal();
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [isSectionAdding]);
+
   return (
     <PrimaryModalWrapper closeModal={closeModal} title="Create Section">
-      <Form method="post" className="flex flex-col gap-5">
+      <Form ref={formRef} method="post" className="flex flex-col gap-5">
         <div>
           <label
             className="block uppercase tracking-wide text-theme-150 text-sm font-semibold mb-4"
@@ -36,10 +52,10 @@ export const CreateSectionModal = ({ closeModal }: CreateSectionForm) => {
         <button
           type="submit"
           name="_action"
-          value="create"
+          value="create-section"
           className="bg-theme-500 h-12 rounded-lg font-semibold text-white"
         >
-          Add
+          {isSectionAdding ? 'Loading...' : 'Add'}
         </button>
       </Form>
     </PrimaryModalWrapper>
