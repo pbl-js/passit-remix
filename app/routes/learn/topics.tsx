@@ -3,8 +3,10 @@ import type { ActionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, useLoaderData, useTransition } from '@remix-run/react';
 import clsx from 'clsx';
+import { AnimatePresence } from 'framer-motion';
 import { Button } from '~/components/button/Button';
 import { CreateSectionModal } from '~/components/createSectionForm/CreateSectionForm';
+import { CreateTopicModal } from '~/components/createTopicModal/CreateTopicModal';
 import { useModalState } from '~/hooks/useModalState';
 import { db } from '~/utils/db.server';
 
@@ -198,7 +200,11 @@ export default function TopicsRoute() {
           Add new smth
         </Button>
       </div>
-      {isAddingOpen && <CreateSectionModal closeModal={closeAddingModal} />}
+      <CreateTopicModal />
+
+      <AnimatePresence>
+        {isAddingOpen && <CreateSectionModal closeModal={closeAddingModal} />}
+      </AnimatePresence>
     </>
   );
 }
