@@ -4,6 +4,7 @@ import React from 'react';
 import { useKeyboardEvent } from '@react-hookz/web';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
+import useLockBodyScroll from '~/hooks/useLockBodyScroll';
 
 type BaseModalWrapperProps = {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ type PrimaryModalWrapperProps = {
   title: string;
 } & BaseModalWrapperProps;
 
-const ModalOverlay = ({
+export const ModalOverlay = ({
   closeModal,
 }: {
   closeModal: CloseModalFunctionType;
@@ -35,6 +36,7 @@ export const PrimaryModalWrapper = ({
   title,
 }: PrimaryModalWrapperProps) => {
   useKeyboardEvent('Escape', closeModal, [closeModal]);
+  useLockBodyScroll();
 
   return (
     <div>

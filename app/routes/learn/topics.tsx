@@ -7,6 +7,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Button } from '~/components/button/Button';
 import { CreateSectionModal } from '~/components/createSectionForm/CreateSectionForm';
 import { CreateTopicModal } from '~/components/createTopicModal/CreateTopicModal';
+import { TopicThumbnail } from '~/components/TopicThumbnail/TopicThumbnail';
 import { useModalState } from '~/hooks/useModalState';
 import { db } from '~/utils/db.server';
 
@@ -107,7 +108,7 @@ export const LastPlayedWidget = ({ className }: { className: string }) => {
       <p className="text-[22px] uppercase">Jedzenie i picie</p>
       <p className="text-5xl">Owoce i warzywa</p>
       <p>Progress</p>
-      <Button type="link" href="/learn/play">
+      <Button size="base" type="link" href="/learn/play">
         Continue
       </Button>
     </div>
@@ -120,6 +121,12 @@ export default function TopicsRoute() {
     openModal: openAddingModal,
     closeModal: closeAddingModal,
   } = useModalState();
+
+  const {
+    isOpen: isTopicAddingOpen,
+    openModal: openTopicAddingModal,
+    closeModal: closeTopicAddingModal,
+  } = useModalState(true);
 
   const { sections } = useLoaderData<typeof loader>();
 
@@ -152,6 +159,12 @@ export default function TopicsRoute() {
                   </div>
                 )
             )}
+            <div
+              onClick={openTopicAddingModal}
+              className="flex w-[214px] h-[164px] rounded-xl p-4 bg-purple-300/30 items-center justify-center"
+            >
+              Add
+            </div>
           </div>
         </div>
 
@@ -183,13 +196,7 @@ export default function TopicsRoute() {
               </div>
               <div className="flex flex-wrap flex-row gap-5">
                 {topicsList.map(({ title, color }) => (
-                  <div
-                    key={title}
-                    style={{ backgroundColor: color }}
-                    className="w-[214px] h-[164px] rounded-xl p-4"
-                  >
-                    title
-                  </div>
+                  <TopicThumbnail key={title} color={color} title={title} />
                 ))}
               </div>
             </div>
@@ -200,7 +207,12 @@ export default function TopicsRoute() {
           Add new smth
         </Button>
       </div>
-      <CreateTopicModal />
+
+      <AnimatePresence>
+        {isTopicAddingOpen && (
+          <CreateTopicModal closeModal={closeTopicAddingModal} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isAddingOpen && <CreateSectionModal closeModal={closeAddingModal} />}

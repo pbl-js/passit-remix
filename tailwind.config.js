@@ -17,8 +17,10 @@ module.exports = {
           150: "#A59CD9", // Light text
         },
         purple: {
+          200: '#A59CD9',
           300: "rgb(117, 93, 129)",
           800: "#321443", // BGC-primary
+          700: '#361455',
           600: "#471875", // BGC-secondary
         },
         yellow: {
